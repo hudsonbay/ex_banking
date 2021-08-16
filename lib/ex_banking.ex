@@ -1,18 +1,15 @@
 defmodule ExBanking do
-  @moduledoc """
-  Documentation for `ExBanking`.
-  """
+  use GenServer
 
-  @doc """
-  Hello world.
+  # Client
 
-  ## Examples
+  def start_link do
+    GenServer.start_link(__MODULE__, [:ex_banking], name: __MODULE__)
+  end
 
-      iex> ExBanking.hello()
-      :world
+  # Server (callbacks)
 
-  """
-  def hello do
-    :world
+  def init(_) do
+    {:ok, []}
   end
 end
