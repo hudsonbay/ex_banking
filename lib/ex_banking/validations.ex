@@ -25,4 +25,20 @@ defmodule ExBanking.Validations do
     |> Map.get(user)
     |> Enum.find(fn x -> Map.get(x, "currency") == currency end)
   end
+
+  def enough_money_for_withdrawal?(user, found_user, amount, currency) do
+    current_amount =
+      find_user_account_by_currency(user, found_user, currency)
+      |> Map.get("amount")
+
+    money_left = current_amount - amount
+
+    cond do
+      money_left < 0 ->
+        false
+
+      money_left >= 0 ->
+        true
+    end
+  end
 end
