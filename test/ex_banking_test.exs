@@ -115,4 +115,55 @@ defmodule ExBankingTest do
     assert ExBanking.get_balance(@user, "EUR") == {:ok, 500}
     assert ExBanking.get_balance(@user, "USD") == {:ok, 1_100}
   end
+
+  test "rejects sending money with invalid amount values" do
+    ExBanking.create_user(@user)
+    ExBanking.create_user(@receiver)
+
+    assert ExBanking.send(@user, @receiver, 12, "") == {:error, :wrong_arguments}
+    assert ExBanking.send(@user, @receiver, "12", "USD") == {:error, :wrong_arguments}
+    assert ExBanking.send(@user, @receiver, 12, :some_currency) == {:error, :wrong_arguments}
+  end
+
+  test "rejects sending money when the sender doesn't exist" do
+    assert ExBanking.send(@user, @receiver, 12, "USD") == {:error, :sender_does_not_exist}
+  end
+
+  test "rejects sending money when the sender doesn't have enough money to send" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+
+    assert ExBanking.send(@user, @receiver, 800, "EUR") == {:error, :not_enough_money}
+  end
+
+  test "rejects sending money when the sender doesn't have an account in the given currency" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+
+    assert ExBanking.send(@user, @receiver, 200, "USD") == {:error, :wrong_arguments}
+  end
+
+  test "rejects sending money when the receiver doesn't exist" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+
+    assert ExBanking.send(@user, @receiver, 12, "EUR") == {:error, :receiver_does_not_exist}
+  end
+
+  test "succesfully sends 10 EUR from one user to a user that doesn't have an EUR account" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+    ExBanking.create_user(@receiver)
+
+    assert ExBanking.send(@user, @receiver, 10, "EUR") == {:ok, 490, 10}
+  end
+
+  test "succesfully sends 10 EUR from one user to a user that has an EUR account" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+    ExBanking.create_user(@receiver)
+    ExBanking.deposit(@receiver, 500, "EUR")
+
+    assert ExBanking.send(@user, @receiver, 10, "EUR") == {:ok, 490, 510}
+  end
 end
