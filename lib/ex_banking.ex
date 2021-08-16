@@ -55,6 +55,18 @@ defmodule ExBanking do
     GenServer.call(__MODULE__, {:withdraw, user, amount, currency})
   end
 
+  @doc """
+  Returns balance of the user for the given currency
+  """
+  @spec get_balance(user :: String.t(), currency :: String.t()) ::
+          {:ok, balance :: number}
+          | {:error, :wrong_arguments | :user_does_not_exist | :too_many_requests_to_user}
+  def get_balance(user, currency) do
+    start_link()
+
+    GenServer.call(__MODULE__, {:get_balance, user, currency})
+  end
+
   # Server (callbacks)
 
   def init(_) do
@@ -103,6 +115,20 @@ defmodule ExBanking do
             {:error, :not_enough_money} ->
               {:reply, {:error, :not_enough_money}, user_list}
           end
+      end
+    else
+      {:reply, {:error, :wrong_arguments}, user_list}
+    end
+  end
+
+  def handle_call({:get_balance, user, currency}, _from, user_list) do
+    if Validations.valid_currency?(currency) do
+      case Validations.find_user(user_list, user) do
+        nil ->
+          {:reply, {:error, :user_does_not_exist}, user_list}
+
+        found_user ->
+          BankingUtils.get_balance(user, found_user, currency, user_list)
       end
     else
       {:reply, {:error, :wrong_arguments}, user_list}

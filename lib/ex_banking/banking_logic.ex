@@ -83,4 +83,16 @@ defmodule ExBanking.BankingUtils do
 
     {:ok, Map.get(updated_account, "amount"), new_bank_state}
   end
+
+  def get_balance(user, found_user, currency, user_list) do
+    account = Validations.find_user_account_by_currency(user, found_user, currency)
+
+    case account do
+      nil ->
+        {:reply, {:error, :wrong_arguments}, user_list}
+
+      _ ->
+        {:reply, {:ok, account |> Map.get("amount")}, user_list}
+    end
+  end
 end
