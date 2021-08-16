@@ -3,6 +3,7 @@ defmodule ExBankingTest do
   doctest ExBanking
 
   @user "manu"
+  @receiver "tom morello"
 
   test "creates a user succesfully" do
     assert ExBanking.create_user(@user) == :ok
@@ -78,5 +79,40 @@ defmodule ExBankingTest do
     ExBanking.deposit(@user, 500, "EUR")
 
     assert ExBanking.withdraw(@user, 200, "EUR") == {:ok, 300}
+  end
+
+  test "rejects obtaining balance of a non-existing user when there no users in the bank" do
+    assert ExBanking.get_balance(@user, "USD") == {:error, :user_does_not_exist}
+  end
+
+  test "rejects obtaining balance of a non-existing user when there users in the bank" do
+    ExBanking.create_user("george")
+    ExBanking.create_user("dimitri")
+    assert ExBanking.get_balance(@user, "USD") == {:error, :user_does_not_exist}
+  end
+
+  test "rejects obtaining the balance of an existing user when the given currency is invalid" do
+    ExBanking.create_user(@user)
+    assert ExBanking.get_balance(@user, "") == {:error, :wrong_arguments}
+    assert ExBanking.get_balance(@user, 12) == {:error, :wrong_arguments}
+    assert ExBanking.get_balance(@user, :some_currency) == {:error, :wrong_arguments}
+  end
+
+  test "rejects obtaining the balance when there's no account of the given currency" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+    ExBanking.deposit(@user, 500, "USD")
+
+    assert ExBanking.get_balance(@user, "CAD") == {:error, :wrong_arguments}
+  end
+
+  test "succesfully obtains the balance of a user in a given currency" do
+    ExBanking.create_user(@user)
+    ExBanking.deposit(@user, 500, "EUR")
+    ExBanking.deposit(@user, 500, "USD")
+    ExBanking.deposit(@user, 600, "USD")
+
+    assert ExBanking.get_balance(@user, "EUR") == {:ok, 500}
+    assert ExBanking.get_balance(@user, "USD") == {:ok, 1_100}
   end
 end
