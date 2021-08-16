@@ -1,5 +1,6 @@
 defmodule ExBanking do
   use GenServer
+  alias ExBanking.Validations
 
   # Client
 
@@ -15,7 +16,11 @@ defmodule ExBanking do
   def create_user(user) do
     start_link()
 
-    GenServer.call(__MODULE__, {:create_user, user})
+    if Validations.user_valid?(user) do
+      {:error, :wrong_arguments}
+    else
+      GenServer.call(__MODULE__, {:create_user, user})
+    end
   end
 
   # Server (callbacks)
@@ -25,6 +30,13 @@ defmodule ExBanking do
   end
 
   def handle_call({:create_user, user}, _from, user_list) do
-    {:reply, :ok, user_list}
+    case Validations.find_user(user_list, user) do
+      nil ->
+        updated_list = [Map.new([{user, []}]) | user_list]
+        {:reply, :ok, updated_list}
+
+      _ ->
+        {:reply, {:error, :user_already_exists}, user_list}
+    end
   end
 end
