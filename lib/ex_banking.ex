@@ -38,6 +38,23 @@ defmodule ExBanking do
     GenServer.call(__MODULE__, {:deposit, user, amount, currency})
   end
 
+  @doc """
+  - Decreases user’s balance in given currency by amount value
+  - Returns new_balance of the user in given format
+  """
+  @spec withdraw(user :: String.t(), amount :: number, currency :: String.t()) ::
+          {:ok, new_balance :: number}
+          | {:error,
+             :wrong_arguments
+             | :user_does_not_exist
+             | :not_enough_money
+             | :too_many_requests_to_user}
+  def withdraw(user, amount, currency) do
+    start_link()
+
+    GenServer.call(__MODULE__, {:withdraw, user, amount, currency})
+  end
+
   # Server (callbacks)
 
   def init(_) do
@@ -69,6 +86,26 @@ defmodule ExBanking do
         else
           {:reply, {:error, :wrong_arguments}, user_list}
         end
+    end
+  end
+
+  def handle_call({:withdraw, user, amount, currency}, _from, user_list) do
+    if Validations.valid_amount?(amount, currency) do
+      case Validations.find_user(user_list, user) do
+        nil ->
+          {:reply, {:error, :user_does_not_exist}, user_list}
+
+        found_user ->
+          case BankingUtils.make_withdraw(user, found_user, amount, currency, user_list) do
+            {:ok, new_amount, new_bank_state} ->
+              {:reply, {:ok, new_amount}, new_bank_state}
+
+            {:error, :not_enough_money} ->
+              {:reply, {:error, :not_enough_money}, user_list}
+          end
+      end
+    else
+      {:reply, {:error, :wrong_arguments}, user_list}
     end
   end
 end
