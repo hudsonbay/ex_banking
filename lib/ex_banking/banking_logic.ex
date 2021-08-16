@@ -23,6 +23,23 @@ defmodule ExBanking.BankingUtils do
     end
   end
 
+  def make_withdraw(user, found_user, amount, currency, user_list) do
+    if Validations.enough_money_for_withdrawal?(user, found_user, amount, currency) do
+      account = Validations.find_user_account_by_currency(user, found_user, currency)
+
+      updated_account =
+        account
+        |> Map.get_and_update("amount", fn current_amount ->
+          {current_amount, current_amount - amount}
+        end)
+        |> elem(1)
+
+      update_user_info(found_user, user, account, updated_account, user_list)
+    else
+      {:error, :not_enough_money}
+    end
+  end
+
   defp create_account_and_put_money_inside(user, found_user, amount, currency, user_list) do
     new_account =
       [
