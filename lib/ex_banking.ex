@@ -67,6 +67,31 @@ defmodule ExBanking do
     GenServer.call(__MODULE__, {:get_balance, user, currency})
   end
 
+  @doc """
+  - Decreases from_user’s balance in given currency by amount value
+  - Increases to_user’s balance in given currency by amount value
+  - Returns balance of from_user and to_user in given format
+  """
+  @spec send(
+          from_user :: String.t(),
+          to_user :: String.t(),
+          amount :: number,
+          currency :: String.t()
+        ) ::
+          {:ok, from_user_balance :: number, to_user_balance :: number}
+          | {:error,
+             :wrong_arguments
+             | :not_enough_money
+             | :sender_does_not_exist
+             | :receiver_does_not_exist
+             | :too_many_requests_to_sender
+             | :too_many_requests_to_receiver}
+  def send(from_user, to_user, amount, currency) do
+    start_link()
+
+    GenServer.call(__MODULE__, {:send, from_user, to_user, amount, currency})
+  end
+
   # Server (callbacks)
 
   def init(_) do
@@ -129,6 +154,27 @@ defmodule ExBanking do
 
         found_user ->
           BankingUtils.get_balance(user, found_user, currency, user_list)
+      end
+    else
+      {:reply, {:error, :wrong_arguments}, user_list}
+    end
+  end
+
+  def handle_call({:send, from_user, to_user, amount, currency}, _from, user_list) do
+    if Validations.valid_amount?(amount, currency) do
+      case Validations.find_user(user_list, from_user) do
+        nil ->
+          {:reply, {:error, :sender_does_not_exist}, user_list}
+
+        found_user ->
+          BankingUtils.attempt_sending(
+            from_user,
+            found_user,
+            to_user,
+            amount,
+            currency,
+            user_list
+          )
       end
     else
       {:reply, {:error, :wrong_arguments}, user_list}

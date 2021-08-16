@@ -95,4 +95,52 @@ defmodule ExBanking.BankingUtils do
         {:reply, {:ok, account |> Map.get("amount")}, user_list}
     end
   end
+
+  def attempt_sending(user, sender_user, to_user, amount_to_send, currency, user_list) do
+    sender_account = Validations.find_user_account_by_currency(user, sender_user, currency)
+
+    case sender_account do
+      nil ->
+        {:reply, {:error, :wrong_arguments}, user_list}
+
+      _ ->
+        if Map.get(sender_account, "amount") > amount_to_send do
+          case Validations.find_user(user_list, to_user) do
+            nil ->
+              {:reply, {:error, :receiver_does_not_exist}, user_list}
+
+            receiver ->
+              complete_transaction(
+                user,
+                sender_user,
+                to_user,
+                receiver,
+                amount_to_send,
+                currency,
+                user_list
+              )
+          end
+        else
+          {:reply, {:error, :not_enough_money}, user_list}
+        end
+    end
+  end
+
+  def complete_transaction(
+        user,
+        sender_user,
+        to_user,
+        receiver,
+        amount_to_send,
+        currency,
+        user_list
+      ) do
+    {new_amount_receiver, _} =
+      make_deposit(to_user, receiver, amount_to_send, currency, user_list)
+
+    {:ok, new_amount_sender, new_bank_state} =
+      make_withdraw(user, sender_user, amount_to_send, currency, user_list)
+
+    {:reply, {:ok, new_amount_sender, new_amount_receiver}, new_bank_state}
+  end
 end
