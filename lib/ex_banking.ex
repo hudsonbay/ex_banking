@@ -7,6 +7,10 @@ defmodule ExBanking do
     GenServer.start_link(__MODULE__, [:ex_banking], name: __MODULE__)
   end
 
+  @doc """
+  - Function creates new user in the system
+  - New user has zero balance of any currency
+  """
   @spec create_user(user :: String.t()) :: :ok | {:error, :wrong_arguments | :user_already_exists}
   def create_user(user) do
     start_link()
