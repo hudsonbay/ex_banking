@@ -19,4 +19,10 @@ defmodule ExBanking.Validations do
   def valid_currency?(currency) do
     is_binary(currency) and String.length(currency) != 0
   end
+
+  def find_user_account_by_currency(user, found_user, currency) do
+    found_user
+    |> Map.get(user)
+    |> Enum.find(fn x -> Map.get(x, "currency") == currency end)
+  end
 end
