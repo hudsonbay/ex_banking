@@ -11,4 +11,12 @@ defmodule ExBanking.Validations do
     user_list
     |> Enum.find(fn x -> Map.has_key?(x, user) end)
   end
+
+  def valid_amount?(amount, currency) do
+    is_number(amount) and amount > 0 and valid_currency?(currency)
+  end
+
+  def valid_currency?(currency) do
+    is_binary(currency) and String.length(currency) != 0
+  end
 end
