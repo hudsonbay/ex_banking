@@ -23,6 +23,7 @@ defmodule ExBanking.MixProject do
   defp deps do
     [
       {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:decimal, "~> 2.0"},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false},
       {:parallel_stream, "~> 1.0.5"}
     ]
