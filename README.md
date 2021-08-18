@@ -9,7 +9,7 @@ During this project I am not considering *exchange rates* for different currenci
 If not using `Money` structs, I usually deal with `Decimal` structs instead of floats to avoid inconsistencies with with math operations. Some of that is explained here: https://0.30000000000000004.com/
 
 Usually when sending money from one user to another we should use **transactions**, a feature provided by databases like Postgres. With that, we make sure that all operations are handled correctly, if not all changes rollback to the initial state before the beginning of the operation.
-In Elixir we could use things like `Ecto.Multi`.
+In Elixir we could use things like `Ecto.Multi` for that.
 
 In this example we are not using any database, so we make this simpler.
 
