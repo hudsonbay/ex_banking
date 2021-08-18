@@ -30,7 +30,9 @@ defmodule ExBanking.BankingUtils do
       updated_account =
         account
         |> Map.get_and_update("amount", fn current_amount ->
-          {current_amount, current_amount - amount}
+          {current_amount,
+           Decimal.sub(Validations.to_decimal(current_amount), Validations.to_decimal(amount))
+           |> Decimal.to_float()}
         end)
         |> elem(1)
 
@@ -61,7 +63,9 @@ defmodule ExBanking.BankingUtils do
     updated_account =
       account
       |> Map.get_and_update("amount", fn current_amount ->
-        {current_amount, current_amount + amount}
+        {current_amount,
+         Decimal.add(Validations.to_decimal(current_amount), Validations.to_decimal(amount))
+         |> Decimal.to_float()}
       end)
       |> elem(1)
 

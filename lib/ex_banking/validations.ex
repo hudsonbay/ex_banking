@@ -41,4 +41,8 @@ defmodule ExBanking.Validations do
         true
     end
   end
+
+  def to_decimal(number) do
+    Decimal.from_float(number * 100 / 100)
+  end
 end
