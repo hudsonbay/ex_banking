@@ -6,7 +6,7 @@ defmodule ExBanking do
 
   # Client
 
-  def start_link do
+  def start_link(_args) do
     GenServer.start_link(__MODULE__, [:ex_banking], name: __MODULE__)
   end
 
@@ -16,11 +16,10 @@ defmodule ExBanking do
   """
   @spec create_user(user :: String.t()) :: :ok | {:error, :wrong_arguments | :user_already_exists}
   def create_user(user) do
-    start_link()
-
     if Validations.user_valid?(user) do
       {:error, :wrong_arguments}
     else
+      ExBanking.UserSupervisor.supervise_user(user)
       GenServer.call(__MODULE__, {:create_user, user})
     end
   end
@@ -33,9 +32,13 @@ defmodule ExBanking do
           {:ok, new_balance :: number}
           | {:error, :wrong_arguments | :user_does_not_exist | :too_many_requests_to_user}
   def deposit(user, amount, currency) do
-    start_link()
+    case ExBanking.UserSupervisor.supervise_user(user) do
+      :ok ->
+        GenServer.call(__MODULE__, {:deposit, user, amount, currency})
 
-    GenServer.call(__MODULE__, {:deposit, user, amount, currency})
+      :error ->
+        GenServer.call(__MODULE__, {:error, :too_many_requests_to_user})
+    end
   end
 
   @doc """
@@ -50,9 +53,13 @@ defmodule ExBanking do
              | :not_enough_money
              | :too_many_requests_to_user}
   def withdraw(user, amount, currency) do
-    start_link()
+    case ExBanking.UserSupervisor.supervise_user(user) do
+      :ok ->
+        GenServer.call(__MODULE__, {:withdraw, user, amount, currency})
 
-    GenServer.call(__MODULE__, {:withdraw, user, amount, currency})
+      :error ->
+        GenServer.call(__MODULE__, {:error, :too_many_requests_to_user})
+    end
   end
 
   @doc """
@@ -62,9 +69,13 @@ defmodule ExBanking do
           {:ok, balance :: number}
           | {:error, :wrong_arguments | :user_does_not_exist | :too_many_requests_to_user}
   def get_balance(user, currency) do
-    start_link()
+    case ExBanking.UserSupervisor.supervise_user(user) do
+      :ok ->
+        GenServer.call(__MODULE__, {:get_balance, user, currency})
 
-    GenServer.call(__MODULE__, {:get_balance, user, currency})
+      :error ->
+        GenServer.call(__MODULE__, {:error, :too_many_requests_to_user})
+    end
   end
 
   @doc """
@@ -87,9 +98,13 @@ defmodule ExBanking do
              | :too_many_requests_to_sender
              | :too_many_requests_to_receiver}
   def send(from_user, to_user, amount, currency) do
-    start_link()
+    case ExBanking.UserSupervisor.supervise_user(from_user) do
+      :ok ->
+        GenServer.call(__MODULE__, {:send, from_user, to_user, amount, currency})
 
-    GenServer.call(__MODULE__, {:send, from_user, to_user, amount, currency})
+      :error ->
+        GenServer.call(__MODULE__, {:error, :too_many_requests_to_user})
+    end
   end
 
   # Server (callbacks)
@@ -179,5 +194,9 @@ defmodule ExBanking do
     else
       {:reply, {:error, :wrong_arguments}, user_list}
     end
+  end
+
+  def handle_call({:error, :too_many_requests_to_user}, _from, user_list) do
+    {:reply, {:error, :too_many_requests_to_user}, user_list}
   end
 end
