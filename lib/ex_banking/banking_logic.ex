@@ -5,6 +5,10 @@ defmodule ExBanking.BankingUtils do
 
   alias ExBanking.Validations
 
+  @doc """
+  Deposits money into the given user account, based on it's currency.
+  If the user doesn't have an account of that currency, it creates it automatically.
+  """
   def make_deposit(user, found_user, amount, currency, user_list) do
     account = Validations.find_user_account_by_currency(user, found_user, currency)
 
@@ -23,6 +27,11 @@ defmodule ExBanking.BankingUtils do
     end
   end
 
+  @doc """
+  Decreases user’s balance in given currency by amount value as long as there's
+  enough money to withdraw.
+  Returns new_balance of the user in given format
+  """
   def make_withdraw(user, found_user, amount, currency, user_list) do
     if Validations.enough_money_for_withdrawal?(user, found_user, amount, currency) do
       account = Validations.find_user_account_by_currency(user, found_user, currency)
@@ -54,6 +63,9 @@ defmodule ExBanking.BankingUtils do
     update_bank_state(user, new_account, found_user, user_list)
   end
 
+  @doc """
+  Updates the bank state
+  """
   def update_bank_state(user, updated_user_info, found_user, user_list) do
     new_user = Map.new([{user, updated_user_info}])
 
@@ -74,7 +86,7 @@ defmodule ExBanking.BankingUtils do
     update_user_info(found_user, user, account, updated_account, user_list)
   end
 
-  def update_user_info(found_user, user, account, updated_account, user_list) do
+  defp update_user_info(found_user, user, account, updated_account, user_list) do
     updated_user_info =
       found_user
       |> Map.get(user)
@@ -102,6 +114,10 @@ defmodule ExBanking.BankingUtils do
     end
   end
 
+  @doc """
+  Makes all the neccesary validations before sending money from user X to Y.
+  If all validations pass, then the transaction is handled
+  """
   def attempt_sending(user, sender_user, to_user, amount_to_send, currency, user_list) do
     sender_account = Validations.find_user_account_by_currency(user, sender_user, currency)
 
@@ -132,7 +148,7 @@ defmodule ExBanking.BankingUtils do
     end
   end
 
-  def complete_transaction(
+  defp complete_transaction(
         user,
         sender_user,
         to_user,

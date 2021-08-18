@@ -1,4 +1,7 @@
 defmodule ExBanking do
+  @moduledoc """
+  Main module appication
+  """
   use GenServer
 
   alias ExBanking.BankingUtils
