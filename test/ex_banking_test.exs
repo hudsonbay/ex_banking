@@ -3,6 +3,11 @@ defmodule ExBankingTest do
   doctest ExBanking
   import ExBanking
 
+  setup do
+    Application.stop(:ex_banking)
+    :ok = Application.start(:ex_banking)
+  end
+
   @user "manu"
   @receiver "tom morello"
 
