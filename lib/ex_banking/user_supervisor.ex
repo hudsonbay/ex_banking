@@ -13,11 +13,11 @@ defmodule ExBanking.UserSupervisor do
 
     cond do
       active < 10 ->
-        IO.puts("number of active supervised processes: #{active}")
+        # IO.puts("number of active supervised processes: #{active}")
         :ok
 
       active >= 10 ->
-        IO.puts("number of active supervised processes: #{active}")
+        # IO.puts("number of active supervised processes: #{active}")
         :error
     end
   end
